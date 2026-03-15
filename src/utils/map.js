@@ -2,7 +2,7 @@ import L from 'leaflet';
 
 let mapInstance = null;
 
-export function crearMapa(containerId, lat = 21.6245, lng = -102.6015, zoom = 15) {
+export function crearMapa(containerId, lat = 21.678470, lng = -102.588384, zoom = 15) {
   const container = document.getElementById(containerId);
   if (!container) return null;
 

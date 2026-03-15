@@ -1,97 +1,635 @@
-/* Reset básico */
-* {
+/* =============================================
+   RESET & BASE
+   ============================================= */
+*, *::before, *::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-body {
-  font-family: sans-serif;
-  background: #f4f4f9;
-  overflow: hidden; /* Evita scroll doble */
+:root {
+  --color-primary:    #4f46e5;
+  --color-primary-h:  #4338ca;
+  --color-danger:     #dc3545;
+  --color-danger-h:   #b02a37;
+  --color-success:    #16a34a;
+  --color-secondary:  #6b7280;
+  --color-secondary-h:#4b5563;
+  --color-bg:         #f4f4f9;
+  --color-surface:    #ffffff;
+  --color-border:     #e2e8f0;
+  --color-text:       #1e293b;
+  --color-text-muted: #64748b;
+  --radius-sm:  6px;
+  --radius-md:  10px;
+  --radius-lg:  14px;
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md:  0 4px 12px rgba(0,0,0,0.10);
+  --shadow-lg:  0 8px 24px rgba(0,0,0,0.12);
+  --transition: 0.2s ease;
+}
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Evita scroll doble en vistas con mapa */
+body.map-view {
+  overflow: hidden;
 }
 
 #app {
   width: 100%;
-  height: 100vh;
-  padding: 0;
-  margin: 0;
+  height: 100dvh; /* dvh: más confiable en móvil que 100vh */
   position: relative;
 }
 
+/* =============================================
+   BOTONES
+   ============================================= */
 button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
   font-family: inherit;
-  background-color: #f5f5f5;
   cursor: pointer;
-  transition: border-color 0.25s;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: background var(--transition), transform var(--transition), opacity var(--transition);
+  touch-action: manipulation; /* elimina el delay de 300ms en móvil */
 }
-button:hover {
-  border-color: #646cff;
+button:active {
+  transform: scale(0.97);
 }
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-.auth-card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 350px; }
-input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-#toggle-auth { color: #4f46e5; font-size: 0.9rem; text-align: center; cursor: pointer; margin-top: 15px; }
+.btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+  padding: 12px 20px;
+  width: 100%;
+  font-weight: 600;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-primary-h);
+}
 
+.btn-secondary {
+  background: #e0e7ff;
+  color: var(--color-primary);
+  padding: 10px 16px;
+  font-weight: 600;
+  border: 1.5px solid #c7d2fe;
+}
+.btn-secondary:hover:not(:disabled) {
+  background: #c7d2fe;
+}
 
+.btn-exit {
+  background: var(--color-danger);
+  color: #fff;
+  padding: 8px 14px;
+  font-size: 0.9rem;
+}
+.btn-exit:hover:not(:disabled) {
+  background: var(--color-danger-h);
+}
+
+.btn-success {
+  background: var(--color-success);
+  color: #fff;
+  padding: 10px 16px;
+  font-weight: 600;
+}
+.btn-success:hover:not(:disabled) {
+  background: #15803d;
+}
+
+.btn-link {
+  background: none;
+  color: var(--color-primary);
+  padding: 8px 4px;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  width: 100%;
+  text-align: center;
+}
+.btn-link:hover {
+  color: var(--color-primary-h);
+}
+
+/* =============================================
+   INPUTS
+   ============================================= */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="date"],
+input[type="url"],
+input[type="number"],
+textarea,
+select {
+  width: 100%;
+  padding: 11px 14px;
+  margin: 6px 0;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-surface);
+  transition: border-color var(--transition), box-shadow var(--transition);
+  -webkit-appearance: none;
+}
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(79,70,229,0.15);
+}
+input::placeholder {
+  color: var(--color-text-muted);
+}
+textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* =============================================
+   AUTH / CARD CENTRADA
+   ============================================= */
+.view-centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: 20px;
+  background: linear-gradient(135deg, #e0e7ff 0%, #f4f4f9 60%);
+}
+
+.auth-card {
+  background: var(--color-surface);
+  padding: 2rem 2rem 1.5rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 380px;
+}
+
+.auth-card h1 {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  text-align: center;
+  margin-bottom: 1.4rem;
+  letter-spacing: -0.5px;
+}
+
+.auth-card .subtitle {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+/* =============================================
+   CARD GENÉRICA (admin, roles, etc.)
+   ============================================= */
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 14px;
+}
+
+.card h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 14px;
+  color: var(--color-text);
+}
+
+/* =============================================
+   SELECCIÓN DE ROL
+   ============================================= */
+.role-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: 24px;
+  background: linear-gradient(135deg, #e0e7ff 0%, #f4f4f9 60%);
+}
+
+.role-container h3 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-text);
+  text-align: center;
+}
+
+.role-container p {
+  color: var(--color-text-muted);
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.role-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.role-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px 12px;
+  border-radius: var(--radius-lg);
+  font-size: 1rem;
+  font-weight: 600;
+  width: 100%;
+  border: 2px solid transparent;
+  transition: all var(--transition);
+}
+
+.role-btn.repartidor {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+.role-btn.repartidor:hover {
+  background: #bfdbfe;
+}
+
+.role-btn.negocio {
+  background: #d1fae5;
+  color: #065f46;
+  border-color: #a7f3d0;
+}
+.role-btn.negocio:hover {
+  background: #a7f3d0;
+}
+
+/* =============================================
+   VISTA MAPA (public + user)
+   ============================================= */
+.map-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* Overlay flotante encima del mapa */
+.map-overlay {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.map-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 10px 14px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  pointer-events: auto;
+}
+
+.map-header h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: -0.3px;
+}
+
+.map-header .rol-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: #e0e7ff;
+  color: var(--color-primary);
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* Buscador */
+.search-box {
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  pointer-events: auto;
+  overflow: hidden;
+}
+
+.search-box input {
+  margin: 0;
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: 13px 16px;
+  font-size: 1rem;
+}
+.search-box input:focus {
+  box-shadow: none;
+  border-color: transparent;
+}
+
+/* =============================================
+   LISTA DE SUGERENCIAS
+   ============================================= */
 .lista-sugerencias {
   list-style: none;
   padding: 0;
-  margin-top: 5px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  pointer-events: auto;
+  max-height: 220px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
+
 .item-calle {
-  padding: 15px;
-  border-bottom: 1px solid #eee;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--color-border);
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  -webkit-tap-highlight-color: transparent;
 }
 .item-calle:last-child { border-bottom: none; }
+.item-calle:hover,
 .item-calle:active { background: #e0e7ff; }
 
-/* Botón primario */
-.btn-primary {
-  background-color: #007bff;
+.item-calle .calle-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+.item-calle strong {
+  font-size: 0.95rem;
+  color: var(--color-text);
+}
+
+/* Panel de info de calle seleccionada */
+.calle-info-panel {
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  pointer-events: auto;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.calle-info-panel .calle-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.calle-info-panel .btn-maps {
+  background: #1a73e8;
   color: white;
+  padding: 10px;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
   border: none;
-  padding: 12px;
-  border-radius: 8px;
+  touch-action: manipulation;
+}
+.calle-info-panel .btn-maps:hover {
+  background: #1558b0;
+}
+
+.calle-info-panel .btn-cerrar {
+  background: none;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  padding: 4px;
+  text-align: center;
+  border: none;
+  cursor: pointer;
   width: 100%;
-  cursor: pointer;
-  font-weight: bold;
-  margin-top: 10px;
 }
 
-/* Botón de salida */
-.btn-exit {
-  background: #dc3545;
-  color: white;
-  border: none;
+/* =============================================
+   PANEL ADMIN
+   ============================================= */
+.admin-wrapper {
+  width: 100%;
+  height: 100dvh;
+  overflow-y: auto;
+  background: var(--color-bg);
+  padding: 16px;
+  padding-bottom: 32px;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.admin-header h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.admin-nav {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+/* Mapa en el panel admin */
+#map-admin {
+  width: 100%;
+  height: 260px;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-border);
+  z-index: 1;
+  margin: 10px 0;
+}
+
+@media (min-width: 600px) {
+  #map-admin {
+    height: 380px;
+  }
+}
+
+.info-ruta {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
   padding: 8px 12px;
-  border-radius: 8px;
-  cursor: pointer;
+  background: #f1f5f9;
+  border-radius: var(--radius-sm);
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-/* Estilo para el botón de geolocalización personalizado */
+.btn-group {
+  display: flex;
+  gap: 8px;
+}
+.btn-group > * {
+  flex: 1;
+}
+
+/* =============================================
+   GESTIÓN DE CALLES
+   ============================================= */
+.gestion-item {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+
+.gestion-item input {
+  flex: 1;
+  margin: 0;
+  padding: 9px 12px;
+  font-size: 0.9rem;
+}
+
+.gestion-item .btn-icon {
+  padding: 9px 12px;
+  width: auto;
+  flex-shrink: 0;
+  font-size: 1rem;
+}
+
+/* =============================================
+   TOAST / NOTIFICACIONES (reemplaza alert)
+   ============================================= */
+#toast-container {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+  width: calc(100% - 32px);
+  max-width: 400px;
+}
+
+.toast {
+  padding: 13px 18px;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #fff;
+  box-shadow: var(--shadow-lg);
+  animation: toastIn 0.25s ease, toastOut 0.3s ease 2.7s forwards;
+  pointer-events: auto;
+  text-align: center;
+}
+
+.toast.success { background: var(--color-success); }
+.toast.error   { background: var(--color-danger); }
+.toast.info    { background: var(--color-primary); }
+.toast.warning { background: #d97706; }
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+@keyframes toastOut {
+  from { opacity: 1; }
+  to   { opacity: 0; transform: translateY(8px); }
+}
+
+/* =============================================
+   SPINNER / LOADING
+   ============================================= */
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  color: var(--color-text-muted);
+  gap: 10px;
+  font-size: 0.9rem;
+}
+
+/* =============================================
+   LEAFLET OVERRIDES
+   ============================================= */
+.leaflet-marker-icon {
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+}
+
 .leaflet-control-custom button {
   background: white;
   border: 2px solid rgba(0,0,0,0.2);
@@ -103,18 +641,39 @@ input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; borde
 .leaflet-control-custom button:hover {
   background-color: #f4f4f4;
 }
-/* Contenedor del mapa */
-#map {
-/*  height: 250px; /* Ajusta la altura a tu gusto */
-  width: 100%;
-  border-radius: 12px;
-  margin: 10px 0;
-  border: 2px solid #ddd;
-  z-index: 1; /* Para que no se encime en los menús */
-}
 
-/* Arreglo para los iconos de Leaflet (a veces se rompen con Vite/NPM) */
-.leaflet-marker-icon {
-  filter: drop-shadow(0 0 2px rgba(0,0,0,0.5));
-}
+/* =============================================
+   UTILIDADES
+   ============================================= */
+.text-muted  { color: var(--color-text-muted); font-size: 0.88rem; }
+.text-center { text-align: center; }
+.mt-8  { margin-top: 8px; }
+.mt-12 { margin-top: 12px; }
+.mt-16 { margin-top: 16px; }
+.w-full { width: 100%; }
 
+/* =============================================
+   RESPONSIVE — Desktop (≥768px)
+   ============================================= */
+@media (min-width: 768px) {
+  .auth-card {
+    padding: 2.5rem;
+  }
+
+  .admin-wrapper {
+    padding: 24px;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  .map-overlay {
+    top: 16px;
+    left: 16px;
+    right: auto;
+    width: 360px;
+  }
+
+  .lista-sugerencias {
+    max-height: 280px;
+  }
+}
