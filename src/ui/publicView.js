@@ -1,11 +1,12 @@
 // ui/publicView.js
 import L from 'leaflet';
-import { crearMapa, agregarControlGeolocalizacion } from '../utils/map';
-import { buscarCalle } from '../api/busqueda';
-import { mostrarToast } from '../utils/toast';
+import { crearMapa, agregarControlGeolocalizacion, dibujarCapaCalles } from '../utils/map';
+import { buscarCalle, obtenerTodasCalles }                              from '../api/busqueda';
+import { mostrarToast }                                                 from '../utils/toast';
 
-let rutaPolyline = null;
+let rutaPolyline     = null;
 let marcadoresPuntos = [];
+let capaCallesBase   = null;   // capa de fondo — nunca se limpia al seleccionar
 
 export function renderPublicView(container) {
   document.body.classList.add('map-view');
@@ -15,13 +16,12 @@ export function renderPublicView(container) {
       <div id="map"></div>
       <div class="map-overlay">
 
-        <!-- Header -->
         <div class="map-header">
           <h2>📍 VH-Maps</h2>
-          <button id="settings-btn" class="btn-link" style="width:auto; padding:4px 8px; font-size:1.4rem; text-decoration:none;">⚙️</button>
+          <button id="settings-btn" class="btn-link"
+            style="width:auto;padding:4px 8px;font-size:1.4rem;text-decoration:none;">⚙️</button>
         </div>
 
-        <!-- Buscador -->
         <div class="search-box">
           <input
             type="text"
@@ -33,54 +33,61 @@ export function renderPublicView(container) {
           >
         </div>
 
-        <!-- Lista de resultados -->
         <ul id="lista-coincidencias" class="lista-sugerencias" style="display:none;"></ul>
-
-        <!-- Panel info de calle seleccionada -->
         <div id="calle-panel" class="calle-info-panel" style="display:none;"></div>
 
       </div>
     </div>
   `;
 
-  const map = crearMapa('map', 21.678470, -102.588384, 15);
+  const map   = crearMapa('map', 21.678470, -102.588384, 15);
+  const input = container.querySelector('#input-busqueda');
+  const lista = container.querySelector('#lista-coincidencias');
+  const panel = container.querySelector('#calle-panel');
+
   agregarControlGeolocalizacion(map);
 
-  const input  = container.querySelector('#input-busqueda');
-  const lista  = container.querySelector('#lista-coincidencias');
-  const panel  = container.querySelector('#calle-panel');
+  // ── Capa base de calles (no bloquea el render inicial) ─────────────────────
+  obtenerTodasCalles().then(calles => {
+    try { capaCallesBase = dibujarCapaCalles(map, calles); }
+    catch { /* mapa destruido antes de resolver */ }
+  });
 
-  // ─── Limpiar selección al hacer click en el mapa ───────────────────────
+  // ── Click en mapa → limpiar selección ─────────────────────────────────────
   map.on('click', () => {
-    limpiarCapas(map);
+    limpiarSeleccion(map);
     panel.style.display = 'none';
     lista.style.display = 'none';
   });
 
-  // ─── Búsqueda con debounce ─────────────────────────────────────────────
-  let debounceTimer;
+  // ── Búsqueda con debounce ──────────────────────────────────────────────────
+  let debTimer;
   input.addEventListener('input', (e) => {
-    clearTimeout(debounceTimer);
-    const query = e.target.value.trim();
+    clearTimeout(debTimer);
+    const q = e.target.value.trim();
 
-    if (query.length < 2) {
+    if (q.length < 2) {
       lista.innerHTML = '';
       lista.style.display = 'none';
       panel.style.display = 'none';
       return;
     }
-
-    debounceTimer = setTimeout(() => realizarBusqueda(query), 280);
+    debTimer = setTimeout(() => realizarBusqueda(q), 280);
   });
 
   async function realizarBusqueda(query) {
-    lista.innerHTML = `<li class="loading-overlay"><span class="spinner" style="border-color: rgba(79,70,229,0.3); border-top-color: #4f46e5;"></span> Buscando...</li>`;
+    lista.innerHTML    = `<li class="loading-overlay">
+      <span class="spinner" style="border-color:rgba(79,70,229,0.3);border-top-color:#4f46e5;"></span>
+      Buscando...
+    </li>`;
     lista.style.display = 'block';
 
     const { data } = await buscarCalle(query);
 
-    if (!data || data.length === 0) {
-      lista.innerHTML = `<li style="padding:14px 16px; color:#64748b; font-size:0.9rem;">Sin resultados para "<strong>${query}</strong>"</li>`;
+    if (!data?.length) {
+      lista.innerHTML = `<li style="padding:14px 16px;color:#64748b;font-size:0.9rem;">
+        Sin resultados para "<strong>${query}</strong>"
+      </li>`;
       return;
     }
 
@@ -92,7 +99,8 @@ export function renderPublicView(container) {
     `).join('');
 
     lista.querySelectorAll('.item-calle').forEach(item => {
-      item.addEventListener('click', () => seleccionarCalle(JSON.parse(item.dataset.calle)));
+      item.addEventListener('click', () =>
+        seleccionarCalle(JSON.parse(item.dataset.calle)));
     });
   }
 
@@ -101,53 +109,45 @@ export function renderPublicView(container) {
     input.value = calle.nombre;
     input.blur();
 
-    limpiarCapas(map);
+    limpiarSeleccion(map);
 
-    // Dibujar ruta combinada
-    if (calle.ruta_combinada && calle.ruta_combinada.length > 0) {
-      const latLngs = calle.ruta_combinada.map(c => [c[1], c[0]]);
-      rutaPolyline = L.polyline(latLngs, { color: '#4f46e5', weight: 5, opacity: 0.85 }).addTo(map);
+    // Dibujar la calle seleccionada en indigo (encima de la capa base)
+    if (calle.ruta_combinada?.length) {
+      const latLngs = calle.ruta_combinada.map(p => [p[1], p[0]]);
+      rutaPolyline = L.polyline(latLngs, { color: '#4f46e5', weight: 5, opacity: 0.9 }).addTo(map);
       map.fitBounds(rutaPolyline.getBounds(), { padding: [40, 40] });
     }
 
-    // Dibujar marcadores de puntos individuales
-    if (calle.puntos && calle.puntos.length > 0) {
+    if (calle.puntos?.length) {
       calle.puntos.forEach(p => {
-        const marker = L.marker([p.lat, p.lng]).addTo(map).bindPopup(`<strong>${calle.nombre}</strong>`);
-        marcadoresPuntos.push(marker);
+        const m = L.marker([p.lat, p.lng]).addTo(map)
+          .bindPopup(`<strong>${calle.nombre}</strong>`);
+        marcadoresPuntos.push(m);
       });
-      if (!calle.ruta_combinada || calle.ruta_combinada.length === 0) {
-        const group = L.featureGroup(marcadoresPuntos);
-        map.fitBounds(group.getBounds(), { padding: [40, 40] });
+      if (!calle.ruta_combinada?.length) {
+        map.fitBounds(L.featureGroup(marcadoresPuntos).getBounds(), { padding: [40, 40] });
       }
     }
 
     // Panel de info
-    panel.style.display = 'flex';
+    panel.style.display       = 'flex';
     panel.style.flexDirection = 'column';
     panel.innerHTML = `
       <span class="calle-title">🛣️ ${calle.nombre}</span>
-      <button class="btn-maps" id="btn-gmaps">
-        🗺️ Abrir en Google Maps
-      </button>
+      <button class="btn-maps" id="btn-gmaps">🗺️ Abrir en Google Maps</button>
       <button class="btn-cerrar" id="btn-cerrar">✕ Cerrar</button>
     `;
 
     panel.querySelector('#btn-gmaps').onclick = () => {
       let url;
-      if (calle.enlaces && calle.enlaces.length > 0) {
-        url = calle.enlaces[0];
-      } else if (calle.puntos && calle.puntos.length > 0) {
-        const p = calle.puntos[0];
-        url = `https://www.google.com/maps?q=${p.lat},${p.lng}`;
-      } else {
-        url = `https://www.google.com/maps/search/${encodeURIComponent(calle.nombre)}`;
-      }
+      if (calle.enlaces?.length)     url = calle.enlaces[0];
+      else if (calle.puntos?.length) url = `https://www.google.com/maps?q=${calle.puntos[0].lat},${calle.puntos[0].lng}`;
+      else                           url = `https://www.google.com/maps/search/${encodeURIComponent(calle.nombre)}`;
       window.open(url, '_blank');
     };
 
     panel.querySelector('#btn-cerrar').onclick = () => {
-      limpiarCapas(map);
+      limpiarSeleccion(map);
       panel.style.display = 'none';
       input.value = '';
     };
@@ -158,7 +158,8 @@ export function renderPublicView(container) {
   };
 }
 
-function limpiarCapas(map) {
+// Solo limpia la selección activa — capaCallesBase nunca se toca
+function limpiarSeleccion(map) {
   if (rutaPolyline) { map.removeLayer(rutaPolyline); rutaPolyline = null; }
   marcadoresPuntos.forEach(m => map.removeLayer(m));
   marcadoresPuntos = [];
